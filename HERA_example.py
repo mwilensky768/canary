@@ -278,6 +278,9 @@ if __name__ == "__main__":
     if (not args.save) and (not args.load):
         warnings.warn("Outputs are being simulated without being saved."
                       "Use --save at the command line to save outputs.")
+    if args.burn_ind > args.Niter:
+        warnings.warn("burn_ind is larger than Niter, so nothing will be plotted. "
+                      "Check arguments for HERA_example script.")
 
     np.random.seed(args.seed)
     aff0 = np.random.randint(2, size=args.Nblps)
