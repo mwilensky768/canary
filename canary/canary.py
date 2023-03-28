@@ -193,7 +193,7 @@ class canary:
             rhs_flx0 = (sys_cov_current * (ninv_cho_use * flx[0])[:, np.newaxis]).sum(axis=2)
         else:
             cov_ninv = sys_cov_current @ ninv_use # num_draw, dat_dim, dat_dim
-            cho_term = (ninv_cho_use * flx[0][:, np.newaixs]).sum(axis=2) # num_draw, dat_dim
+            cho_term = (ninv_cho_use * flx[0][:, np.newaxis]).sum(axis=2) # num_draw, dat_dim
             rhs_flx0 = (sys_cov_current[np.newaxis] * cho_term[:, np.newaxis]).sum(axis=2)
 
         rhs_dat = (cov_ninv * data_use[:, np.newaxis]).sum(axis=2)
