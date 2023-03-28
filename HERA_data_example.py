@@ -58,8 +58,8 @@ if __name__ == "__main__":
     can = canary(diff_block, ninv_block, diag_noise=False)
     np.random.seed(args.seed)
 
-    aff0 = np.random.randint(2, size=args.Nblps)
-    s0 = np.random.normal(size=(args.Nblps, args.Ntimes))
+    aff0 = np.random.randint(2, size=Nblp)
+    s0 = np.random.normal(size=(Nblp, Ntimes))
     Caff0 = np.eye(2 * Ntimes)
     var0 = 1e-4
 
