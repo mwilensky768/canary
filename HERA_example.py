@@ -241,7 +241,7 @@ def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm
     make_data_plots(outdir, tag, data, true_sys, sys_samps, mode=mode)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--seed", type=int, action="store", default=4758693,
+parser.add_argument("--seed", type=int, action="store", default=6027431,
                      required=False, help="Set the random seed.")
 parser.add_argument("--Ntimes", type=int, action="store", default=20,
                     required=False,

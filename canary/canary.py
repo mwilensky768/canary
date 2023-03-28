@@ -70,11 +70,11 @@ class canary:
 
 
         if df_prior_unaff is None:
-            self.df_prior_unaff = self.num_draw
+            self.df_prior_unaff = 1
         else:
             self.df_prior_unaff = df_prior_unaff
         if scale_prior_unaff is None:
-            self.scale_prior_unaff = 1e-2 * self.df_prior_unaff
+            self.scale_prior_unaff = 1e-4 * self.df_prior_unaff
         else:
             self.scale_prior_unaff = scale_prior_unaff
 
