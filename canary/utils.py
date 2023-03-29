@@ -1,16 +1,16 @@
 import matplotlib.pyplot as plt
 
 
-def make_aff_means_plot(outdir, tag, aff_samps, frac_sys, xlabel):
+def make_aff_means_plot(outdir, tag, aff_samps, xlabel, draws, frac_sys=None):
     aff_means = np.mean(aff_samps, axis=0)
     num_draw = len(aff_means)
 
     plt.figure(figsize=(6, 3))
-    bls = [0, int(0.5 * num_draw), num_draw - 1]
     plt.plot(aff_means, marker='o', linestyle="None")
-    plt.plot(bls, aff_means[bls], marker='o', linestyle="None", color="tab:red")
+    plt.plot(bls, aff_means[draws], marker='o', linestyle="None", color="tab:red")
     plt.axhline(0.5, linestyle='--', color='black')
-    plt.axvline((1 - frac_sys) * num_draw, linestyle='--', color='black')
+    if frac_sys is not None:
+        plt.axvline((1 - frac_sys) * num_draw, linestyle='--', color='black')
     plt.ylabel("Probability of systematic presence")
     plt.xlabel(xlabel)
 
@@ -46,20 +46,19 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
     fig.savefig(f"{outdir}/cov_matr_plots_{tag}.png")
 
 
-def make_data_plots(outdir, tag, data, sys_samps, true_sys=None, mode='real',
-                    units="arbs"):
+def make_data_plots(outdir, tag, data, sys_samps, draws, title, true_sys=None,
+                    mode='real', units="arbs"):
     Ntimes = data.shape[1]
-    Nblps = data.shape[0]
+    num_draw = data.shape[0]
     if mode == "real":
         fig, ax = plt.subplots(ncols=3, figsize=(24, 12))
     else:
         fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(24, 24))
     blind = 0
-    bls = [0, int(0.5 * Nblps), Nblps - 1]
-    for blind_ind, blind in enumerate(bls):
+    for blind_ind, blind in enumerate(draws):
 
         if mode == "real":
-            ax[blind_ind].set_title(f"Blp {blind}", fontsize=20)
+            ax[blind_ind].set_title(f"{title} {blind}", fontsize=20)
 
 
             ax[blind_ind].plot(data.T[:, blind], label="Simulated Data (sys + noise)")

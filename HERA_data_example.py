@@ -6,6 +6,9 @@ parser = ArgumentParser()
 parser.add_argument("--infile", type=str, action="store", required=True,
                     help="The data file on which to operate. Should be a uvh5 "
                     "file readable by hera_pspec.")
+parser.add_argument("--outdir", type=str, action="store", required=False,
+                    default='./'
+                    help="The output directory. Default is the working directory.")
 parser.add_argument("--seed", type=int, action="store", required=False,
                     default=3849205, help="Set the random seed.")
 parser.add_argument("--noise_file", type=str, action="store", required=True,
@@ -19,7 +22,23 @@ parser.add_argument("--delay_ind", type=int, action="store", required=True,
                     help="Which delay index to run the test on.")
 parser.add_argument("--Niter", type=int, action="store", required=False,
                     default=int(1e4), help="Number of posterior samples to draw.")
+parser.add_argument("--burn_ind", type=int, action="store", required=False,
+                    default=int(2e3),
+                    help="Number of samples to burn when calculating statistics,"
+                    " plotting, etc. All samples are always written out "
+                    " regardless of this argument, it just changes what is "
+                    " calculated/plotted.")
+parser.add_argument("--draws", type-int, action="store", required=False,
+                    default=[10, 20, 30], nargs=3, help="Which blps to plot.")
 args = parser.parse_args()
+
+def extract_file_nickname(infile):
+    left_ind = infile.rfind("/") + 1
+    right_ind = infile.rfind(".")
+
+    nickname = infile[left_ind:right_ind]
+
+    return nickname
 
 
 if __name__ == "__main__":
@@ -61,11 +80,19 @@ if __name__ == "__main__":
     aff0 = np.random.randint(2, size=Nblp)
     s0 = np.random.normal(size=(Nblp, Ntimes))
     Caff0 = np.eye(2 * Ntimes)
-    var0 = 1e-4
+    var0 = 1e-2
 
     sys_samps, Caff_samps, var_samps, aff_samps = can.get_post_samps(s0, Caff0,
                                                                      var0, aff0,
                                                                      do_affsamps=True,
                                                                      Niter=args.Niter)
-    # FIXME: make some plot wrappers -- can probably use the same ones in sim script
-    plot_wrapper(sys_samps, Caff_samps, var_samps, aff_samps)
+
+    nickname = extract_file_nickname(args.infile)
+    tag = f"{nickname}_times_{min(times)}_{max(times)}_blgroup_{blgroup}_delay_ind_{delay_ind}_seed_{seed}"
+    make_aff_means_plot(args.outdir, tag, aff_samps[args.burn_ind:],
+                        "Baseline-Pair Index", args.draws)
+
+    make_cov_plots(args.outdir, tag, Caff_samps[args.burn_ind:], vmax=sys_var,)
+    make_cov_hists(args.outdir, tag, Caff_samps[args.burn_ind:])
+    make_data_plots(args.outdir, tag, data, sys_samps[args.burn_ind:],
+                    args.draws, "Blp", mode=mode)

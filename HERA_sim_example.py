@@ -101,12 +101,13 @@ def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm
                                                                                          aff0=aff0,
                                                                                          var0=var0, Caff0=Caff0,
                                                                                          save=save, outdir=outdir,
-                                                                                         load=load, mode=mode)
-    make_aff_means_plot(outdir, tag, aff_samps[burn_ind:], frac_sys,
-                        "Baseline-Pair Index")
+    draws = [0, int(0.5 * num_draw), num_draw - 1]                                                                                 load=load, mode=mode)
+    make_aff_means_plot(outdir, tag, aff_samps[burn_ind:],
+                        "Baseline-Pair Index", draws, frac_sys=frac_sys)
     make_cov_plots(outdir, tag, Caff_samps[burn_ind:], vmax=sys_var, Csys=Csys,)
     make_cov_hists(outdir, tag, Caff_samps[burn_ind:], Csys=Csys)
-    make_data_plots(outdir, tag, data, sys_samps, true_sys=true_sys, mode=mode)
+    make_data_plots(outdir, tag, data, sys_samps[burn_ind:], draws, "Blp",
+                    true_sys=true_sys, mode=mode)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, action="store", default=6027431,
