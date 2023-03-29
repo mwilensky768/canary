@@ -112,7 +112,7 @@ def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm
                     true_sys=true_sys, mode=mode)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--seed", type=int, action="store", default=6027431,
+parser.add_argument("--seed", type=int, action="store", default=234,
                      required=False, help="Set the random seed.")
 parser.add_argument("--Ntimes", type=int, action="store", default=20,
                     required=False,
