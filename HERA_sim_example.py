@@ -101,7 +101,9 @@ def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm
                                                                                          aff0=aff0,
                                                                                          var0=var0, Caff0=Caff0,
                                                                                          save=save, outdir=outdir,
-    draws = [0, int(0.5 * num_draw), num_draw - 1]                                                                                 load=load, mode=mode)
+                                                                                         load=load, mode=mode)
+
+    draws = [0, int(0.5 * Nblps), Nblps - 1]
     make_aff_means_plot(outdir, tag, aff_samps[burn_ind:],
                         "Baseline-Pair Index", draws, frac_sys=frac_sys)
     make_cov_plots(outdir, tag, Caff_samps[burn_ind:], vmax=sys_var, Csys=Csys,)

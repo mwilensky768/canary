@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import norm
 
 
 def make_aff_means_plot(outdir, tag, aff_samps, xlabel, draws, frac_sys=None):
@@ -7,7 +9,7 @@ def make_aff_means_plot(outdir, tag, aff_samps, xlabel, draws, frac_sys=None):
 
     plt.figure(figsize=(6, 3))
     plt.plot(aff_means, marker='o', linestyle="None")
-    plt.plot(bls, aff_means[draws], marker='o', linestyle="None", color="tab:red")
+    plt.plot(draws, aff_means[draws], marker='o', linestyle="None", color="tab:red")
     plt.axhline(0.5, linestyle='--', color='black')
     if frac_sys is not None:
         plt.axvline((1 - frac_sys) * num_draw, linestyle='--', color='black')
