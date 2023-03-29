@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 from canary import canary
+from canary.utils import make_aff_means_plot, make_cov_plots, make_data_plots, make_cov_hists
 import argparse
 import warnings
 from scipy.stats import norm
@@ -76,143 +77,9 @@ def sim_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm,
 
     return sys_samps, Caff_samps, var_samps, aff_samps, Csys, data, true_sys, tag
 
-def make_data_plots(outdir, tag, data, true_sys, sys_samps, mode='real'):
-    Ntimes = data.shape[1]
-    Nblps = data.shape[0]
-    if mode == "real":
-        fig, ax = plt.subplots(ncols=3, figsize=(24, 12))
-    else:
-        fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(24, 24))
-    blind = 0
-    bls = [0, int(0.5 * Nblps), Nblps - 1]
-    for blind_ind, blind in enumerate(bls):
-
-        if mode == "real":
-            ax[blind_ind].set_title(f"Blp {blind}", fontsize=20)
-            ax[blind_ind].plot(true_sys.T[:, blind], label="Injected systematic")
-            ax[blind_ind].plot(data.T[:, blind], label="Simulated Data (sys + noise)")
-            ax[blind_ind].plot(np.mean(sys_samps, axis=0)[blind], label="Mean (Posterior)")
-            quants = np.quantile(sys_samps[:, blind], [norm.cdf(-2), norm.cdf(2)], axis=0)
-            ax[blind_ind].fill_between(np.arange(Ntimes), *quants, color="tab:green", alpha=0.25,
-                                       label="2$\sigma$ confidence")
-            ax[blind_ind].set_xlabel("Time Step", fontsize=20)
-            ax[blind_ind].set_ylabel("Data Value (arbs)", fontsize=20)
-            ax[blind_ind].tick_params(labelsize=16)
-            ax[blind_ind].legend(fontsize=16)
-        else:
-
-            ax[0, blind_ind].plot(true_sys.T[:(Ntimes // 2), blind], label="Re(Injected systematic)")
-            ax[0, blind_ind].plot(data.T[:(Ntimes // 2), blind], label="Re(Simulated Data) (sys + noise)")
-            ax[0, blind_ind].plot(np.mean(sys_samps, axis=0)[blind, :(Ntimes // 2)], label="Re(Mean(Posterior))")
-            quants = np.quantile(sys_samps[:, blind, :(Ntimes // 2)], [norm.cdf(-2), norm.cdf(2)], axis=0)
-            ax[0, blind_ind].fill_between(np.arange(Ntimes // 2), *quants, color="tab:green", alpha=0.25,
-                                       label="2$\sigma$ confidence, Re")
-
-            ax[1, blind_ind].plot(true_sys.T[(Ntimes // 2):, blind], label="Im(Injected systematic)")
-            ax[1, blind_ind].plot(data.T[(Ntimes // 2):, blind], label="Im(Simulated Data) (sys + noise)")
-            ax[1, blind_ind].plot(np.mean(sys_samps, axis=0)[blind, (Ntimes // 2):], label="Im(Mean(Posterior))")
-            quants = np.quantile(sys_samps[:, blind, (Ntimes // 2):], [norm.cdf(-2), norm.cdf(2)], axis=0)
-            ax[1, blind_ind].fill_between(np.arange(Ntimes // 2), *quants, color="tab:green", alpha=0.25,
-                                       label="2$\sigma$ confidence, Im")
-
-            for row_ind in [0, 1]:
-                ax[row_ind, blind_ind].set_title(f"Blp {blind}", fontsize=20)
-                ax[row_ind, blind_ind].set_xlabel("Time Step", fontsize=20)
-                ax[row_ind, blind_ind].set_ylabel("Data Value (arbs)", fontsize=20)
-                ax[row_ind, blind_ind].tick_params(labelsize=16)
-                ax[row_ind, blind_ind].legend(fontsize=16)
-
-    fig.savefig(f"{outdir}/sys_realization_plots_{tag}.png")
-    plt.close(fig)
-
-def make_cov_plots(outdir, tag, Csys, sys_cov_samps, vmin=0, vmax=1, cmap='inferno', mode='real'):
-    fig, ax = plt.subplots(ncols=2, figsize=(16, 8))
-
-    ax[0].imshow(Csys, vmin=vmin, vmax=vmax, cmap=cmap)
-    ax[0].set_title("Injected Systematic Cov.")
-
-    im = ax[1].imshow(np.mean(sys_cov_samps, axis=0), vmin=vmin, vmax=vmax, cmap=cmap)
-    ax[1].set_title("Mean Covariance Sample")
-    fig.colorbar(im, ax=ax.ravel().tolist())
-    for ax_ob in ax:
-        if mode == 'real':
-            ax_ob.set_ylabel("Time Step")
-            ax_ob.set_xlabel("Time Step")
-        else:
-            ax_ob.set_ylabel("Block Time Step")
-            ax_ob.set_xlabel("Block Time Step")
-
-    fig.savefig(f"{outdir}/cov_matr_plots_{tag}.png")
-    plt.close(fig)
-
-def make_corr_samps(sys_cov_samps):
-    Ntimes = sys_cov_samps.shape[-1]
-    diag_samps = sys_cov_samps[:, np.arange(Ntimes), np.arange(Ntimes)]
-    denom = np.sqrt(np.einsum('ij,ik->ijk', diag_samps, diag_samps))
-    corr_samps = sys_cov_samps / denom
-
-    return corr_samps
-
-def make_cov_hists(outdir, tag, sys_cov_samps, Csys, time_inds_tup=((0, 0), (5, 5), (0, 1), (0, 10))):
-    fig, ax = plt.subplots(ncols=3, figsize=(24, 8))
-    ax = ax.ravel()
 
 
-    corr_samps = make_corr_samps(sys_cov_samps)
 
-    ax[0].hist([sys_cov_samps[:, time_inds_tup[0][0], time_inds_tup[0][1]],
-                sys_cov_samps[:, time_inds_tup[1][0], time_inds_tup[1][1]]],
-               bins="auto", histtype="step",
-               label=[f"{time_inds_tup[0]}", f"{time_inds_tup[1]}"])
-    ax[0].set_title("Diagonal Covariance Entries", fontsize=20)
-    ax[0].set_xlabel("Matrix Value (arbs)", fontsize=20)
-    ax[0].axvline(Csys[time_inds_tup[0][0], time_inds_tup[0][1]], color='black', linestyle='--')
-
-
-    for samp_ind, samps in enumerate([sys_cov_samps, corr_samps]):
-
-        ax[samp_ind + 1].hist([samps[:, time_inds_tup[2][0], time_inds_tup[2][1]],
-                               samps[:, time_inds_tup[3][0], time_inds_tup[3][1]]],
-                              bins="auto", histtype="step",
-                              label=[f"{time_inds_tup[2]}", f"{time_inds_tup[3]}"])
-
-    ax[1].axvline(Csys[time_inds_tup[2][0], time_inds_tup[2][1]], color='tab:blue', linestyle='--')
-    ax[1].axvline(Csys[time_inds_tup[3][0], time_inds_tup[3][1]], color='tab:orange', linestyle='--')
-
-    ax[2].axvline(Csys[time_inds_tup[2][0], time_inds_tup[2][1]] / Csys[0,0], color='tab:blue', linestyle='--')
-    ax[2].axvline(Csys[time_inds_tup[3][0], time_inds_tup[3][1]] / Csys[0,0], color='tab:orange', linestyle='--')
-
-    ax[1].set_title("Off-Diagonal Covariance Entries", fontsize=20)
-    ax[2].set_title("Off-Diagonal Corrleation Coefficients", fontsize=20)
-    for ax_ob in ax[:2]:
-        ax_ob.set_xlabel("Matrix Value (arbs)", fontsize=20)
-    ax[2].set_xlabel("Correlation Coefficient", fontsize=20)
-
-    for ax_ob in ax:
-        ax_ob.set_ylabel("Counts", fontsize=20)
-        ax_ob.tick_params(labelsize=16)
-        ax_ob.legend(fontsize=20)
-    fig.savefig(f"{outdir}/cov_hists_{tag}.png")
-    plt.close(fig)
-
-def make_aff_means_plot(outdir, tag, aff_samps, frac_sys):
-    aff_means = np.mean(aff_samps, axis=0)
-    Nblps = len(aff_means)
-
-    plt.figure(figsize=(6, 3))
-
-    print(f"Number of baslines with p > 0.5: {np.count_nonzero(aff_means > 0.5)}")
-    print(f"Number of baslines with p > 0.09: {np.count_nonzero(aff_means > 1/11)}")
-    bls = [0, int(0.5 * Nblps), Nblps - 1]
-    plt.plot(aff_means, marker='o', linestyle="None")
-    plt.plot(bls, aff_means[bls], marker='o', linestyle="None", color="tab:red")
-    plt.axhline(0.5, linestyle='--', color='black')
-    plt.axvline((1 - frac_sys) * Nblps, linestyle='--', color='black')
-    plt.ylabel("Probability of systematic presence")
-    plt.xlabel("Baseline-pair index")
-
-    plt.savefig(f"{outdir}/aff_means_{tag}.png")
-    plt.close()
 
 
 def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm, sys_var=1, scale_prior_aff=None,
@@ -235,10 +102,11 @@ def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm
                                                                                          var0=var0, Caff0=Caff0,
                                                                                          save=save, outdir=outdir,
                                                                                          load=load, mode=mode)
-    make_aff_means_plot(outdir, tag, aff_samps[burn_ind:], frac_sys)
-    make_cov_plots(outdir, tag, Csys, Caff_samps[burn_ind:], vmax=sys_var)
-    make_cov_hists(outdir, tag, Caff_samps[burn_ind:], Csys)
-    make_data_plots(outdir, tag, data, true_sys, sys_samps, mode=mode)
+    make_aff_means_plot(outdir, tag, aff_samps[burn_ind:], frac_sys,
+                        "Baseline-Pair Index")
+    make_cov_plots(outdir, tag, Caff_samps[burn_ind:], vmax=sys_var, Csys=Csys,)
+    make_cov_hists(outdir, tag, Caff_samps[burn_ind:], Csys=Csys)
+    make_data_plots(outdir, tag, data, sys_samps, true_sys=true_sys, mode=mode)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, action="store", default=6027431,
@@ -289,4 +157,5 @@ if __name__ == "__main__":
     full_wrapper(Ntimes=args.Ntimes, Nblps=args.Nblps, noise_cov=args.noise_var,
                  corr_scale=args.corr_scale, sys_var=args.sys_var, Niter=args.Niter,
                  frac_sys=args.frac_sys, outdir=args.outdir, save=args.save,
-                 load=args.load, burn_ind=args.burn_ind, mode=mode, s0=s0, aff0=aff0)
+                 load=args.load, burn_ind=args.burn_ind, mode=mode, s0=s0,
+                 aff0=aff0)
