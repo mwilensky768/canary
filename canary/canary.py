@@ -153,12 +153,18 @@ class canary:
         if aff_mode:
             df = self.df_prior_aff
             scale = self.scale_prior_aff
-            scatmat = np.einsum('ij,ik->jk', sys_current, sys_current, optimize=True)
+            if sys_current is not None:
+                scatmat = np.einsum('ij,ik->jk', sys_current, sys_current, optimize=True)
+            else:
+                scatmat = 0
             sys_cov_samp = invwishart(df=df + num_class, scale=scale + scatmat).rvs()
         else:
             df = self.df_prior_unaff
             scale = self.scale_prior_unaff
-            sum_squares = np.sum(sys_current**2)
+            if sys_current is not None:
+                sum_squares = np.sum(sys_current**2)
+            else:
+                sum_squares = 0
             sys_cov_samp = invgamma(df + num_class*self.dat_dim / 2, scale=sum_squares/2 + scale).rvs()
 
 
@@ -286,25 +292,33 @@ class canary:
                 not_aff_current = np.logical_not(aff_current)
                 num_aff_current = aff_current.sum()
                 # Update sys
-                sys_current[aff_current] = self.get_sys_samp(Caff_current,
-                                                             self.data[aff_current],
-                                                             self.ninv[aff_current],
-                                                             self.ninv_cho[aff_current])
-                sys_current[not_aff_current] = self.get_sys_samp(var_current * np.eye(self.dat_dim),
-                                                                 self.data[not_aff_current],
-                                                                 self.ninv[not_aff_current],
-                                                                 self.ninv_cho[not_aff_current])
+                if np.any(aff_current):
+                    sys_current[aff_current] = self.get_sys_samp(Caff_current,
+                                                                 self.data[aff_current],
+                                                                 self.ninv[aff_current],
+                                                                 self.ninv_cho[aff_current])
+                    # Update covariances
+                    Caff_current = self.get_sys_cov_samp(sys_current[aff_current], num_aff_current, aff_mode=True)
+                else:
+                    # pull from prior
+                    Caff_current = self.get_sys_cov_samp(None, num_aff_current, aff_mode=True)
+
+                if np.any(not_aff_current):
+                    sys_current[not_aff_current] = self.get_sys_samp(var_current * np.eye(self.dat_dim),
+                                                                     self.data[not_aff_current],
+                                                                     self.ninv[not_aff_current],
+                                                                     self.ninv_cho[not_aff_current])
+                    var_current = self.get_sys_cov_samp(sys_current[not_aff_current],
+                                                        self.num_draw - num_aff_current,
+                                                        aff_mode=False)
+                else:
+                    var_current = self.get_sys_cov_samp(None,
+                                                        self.num_draw - num_aff_current,
+                                                        aff_mode=False)
                 sys_samps[iter_ind] = sys_current
-
-                # Update covariances
-                Caff_current = self.get_sys_cov_samp(sys_current[aff_current], num_aff_current, aff_mode=True)
                 Caff_samps[iter_ind] = Caff_current
-
-
-                var_current = self.get_sys_cov_samp(sys_current[not_aff_current],
-                                                    self.num_draw - num_aff_current,
-                                                    aff_mode=False)
                 var_samps[iter_ind] = var_current
+
 
                 # Update affected
                 aff_current = self.get_aff_current(sys_current, Caff_current, var_current)
