@@ -32,14 +32,23 @@ parser.add_argument("--burn_ind", type=int, action="store", required=False,
                     " plotting, etc. All samples are always written out "
                     " regardless of this argument, it just changes what is "
                     " calculated/plotted.")
-parser.add_argument("--draws", type=int, action="store", required=False,
-                    default=[10, 20, 30], nargs=3, help="Which blps to plot.")
+parser.add_argument("--blps", type=int, action="store", required=False,
+                    default=[0, 5, 10], nargs=3, help="Which blps to plot.")
 parser.add_argument("--freqs", type=float, nargs=2, action="store", required=True,
                     help="lower and upper frequencies to use in the data")
 parser.add_argument("--pol", type=str, action="store", required=False,
                     default='nn', help="Which polarization to use.")
 parser.add_argument("--max_lag", type=int, action="store", required=False,
                     default=2, help="Max lag to use for noise cov. estimation.")
+parser.add_argument("--df_prior_unaff", type=int, action="store", required=False,
+                    default=1,
+                    help="Degrees of freedom parameter for the prior on unaffected data."
+                    " Setting this higher makes the prior sharper, causing more"
+                    " difficulty in hopping between affected/unaffected classes.")
+parser.add_argument("--scale_prior_unaff", type=float, action="store", required=False,
+                    default=1e-4,
+                    help="Scale parameter for the prior on unaffected data. "
+                    "Default is a good setting for noise with unit variance.")
 args = parser.parse_args()
 
 def extract_file_nickname(infile):
@@ -145,7 +154,7 @@ if __name__ == "__main__":
                  #(11, 13), (13, 15), (15, 17), (3, 5)]
     # FIXME: Hardcoded 28m E-W group with more than a couple nights in H4C IDR2.2
     red_group = [(92, 130), (103, 143), (81, 119), (3, 29)]
-    red_group_list = [bl + ("nn",) for bl in red_group]
+    red_group_list = [bl + (args.pol,) for bl in red_group]
 
     print("Reading in data.")
     data_use = read_data(args.infile, args.freqs, args.delay_ind, args.time_inds,
@@ -185,7 +194,9 @@ if __name__ == "__main__":
     ninv_block = 2 * np.block([[diff_ninv.real, -diff_ninv.imag], [diff_ninv.imag, diff_ninv.real]])
 
     print("Setting up canary object.")
-    can = canary(diff_block, ninv_block, diag_noise=False)
+    can = canary(diff_block, ninv_block, diag_noise=False,
+                 scale_prior_unaff=args.scale_prior_unaff,
+                 df_prior_unaff=args.df_prior_unaff)
     np.random.seed(args.seed)
 
     aff0 = np.random.randint(2, size=Nblp)
@@ -202,12 +213,16 @@ if __name__ == "__main__":
     nickname = extract_file_nickname(args.infile)
     tag = f"{nickname}_times_{min(args.time_inds)}_{max(args.time_inds)}_blgroup"
     f"_{args.blgroup}_delay_ind_{args.delay_ind}_seed_{args.seed}"
+
+    print("Saving samples")
+    save_samps(args.outdir, tag, sys_samps, Caff_samps, var_samps, aff_samps)
+
     print("Plotting.")
     make_aff_means_plot(args.outdir, tag, aff_samps[args.burn_ind:],
-                        "Baseline-Pair Index", args.draws)
+                        "Baseline-Pair Index", args.blps)
 
     make_cov_plots(args.outdir, tag, Caff_samps[args.burn_ind:], vmax=None,)
     make_cov_hists(args.outdir, tag, Caff_samps[args.burn_ind:],
                    time_inds_tup=((0, 0), (2, 2), (0, 1), (0, 2)))
     make_data_plots(args.outdir, tag, diff_block, sys_samps[args.burn_ind:],
-                    args.draws, "Blp", mode="constant_phase")
+                    args.blps, "Blp", mode="constant_phase")
