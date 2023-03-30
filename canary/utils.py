@@ -19,6 +19,8 @@ def make_aff_means_plot(outdir, tag, aff_samps, xlabel, draws, frac_sys=None):
     plt.savefig(f"{outdir}/aff_means_{tag}.png")
     plt.close()
 
+    return
+
 
 def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
                    cmap='inferno', mode='real'):
@@ -46,6 +48,8 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
             ax_ob.set_xlabel("Block Time Step")
 
     fig.savefig(f"{outdir}/cov_matr_plots_{tag}.png")
+
+    return
 
 
 def make_data_plots(outdir, tag, data, sys_samps, draws, title, true_sys=None,
@@ -106,6 +110,8 @@ def make_data_plots(outdir, tag, data, sys_samps, draws, title, true_sys=None,
     fig.savefig(f"{outdir}/sys_realization_plots_{tag}.png")
     plt.close(fig)
 
+    return
+
 
 def make_corr_samps(sys_cov_samps):
     Ntimes = sys_cov_samps.shape[-1]
@@ -160,3 +166,14 @@ def make_cov_hists(outdir, tag, sys_cov_samps, Csys=None,
         ax_ob.legend(fontsize=20)
     fig.savefig(f"{outdir}/cov_hists_{tag}.png")
     plt.close(fig)
+
+    return
+
+def save_samps(outdir, tag, sys_samps, Caff_samps, var_samps, aff_samps):
+
+    np.save(f"{outdir}/canary_sys_samps_{tag}.npy", sys_samps)
+    np.save(f"{outdir}/canary_Caff_samps_{tag}.npy", Caff_samps)
+    np.save(f"{outdir}/canary_var_samps_{tag}.npy", var_samps)
+    np.save(f"{outdir}/canary_aff_samps_{tag}.npy", aff_samps)
+
+    return
