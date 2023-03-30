@@ -1,6 +1,6 @@
 from canary import canary
 from argparse import ArgumentParser
-from canary.utils import make_aff_means_plot, make_cov_plots, make_data_plots, make_cov_hists
+from canary.utils import make_aff_means_plot, make_cov_plots, make_data_plots, make_cov_hists, save_samps
 import numpy as np
 from hera_cal.vis_clean import VisClean
 from scipy.linalg import toeplitz
