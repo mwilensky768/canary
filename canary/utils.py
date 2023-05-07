@@ -9,7 +9,8 @@ def make_aff_means_plot(outdir, tag, aff_samps, xlabel, draws, frac_sys=None):
 
     plt.figure(figsize=(6, 3))
     plt.plot(aff_means, marker='o', linestyle="None")
-    plt.plot(draws, aff_means[draws], marker='o', linestyle="None", color="tab:red")
+    if draws is not None:
+        plt.plot(draws, aff_means[draws], marker='o', linestyle="None", color="tab:red")
     plt.axhline(0.5, linestyle='--', color='black')
     if frac_sys is not None:
         plt.axvline((1 - frac_sys) * num_draw, linestyle='--', color='black')
@@ -48,6 +49,7 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
             ax_ob.set_xlabel("Block Time Step")
 
     fig.savefig(f"{outdir}/cov_matr_plots_{tag}.png")
+    plt.close(fig)
 
     return
 
