@@ -17,6 +17,7 @@ def make_aff_means_plot(outdir, tag, aff_samps, xlabel, draws, frac_sys=None):
     plt.ylabel("Probability of systematic presence")
     plt.xlabel(xlabel)
 
+    plt.tight_layout()
     plt.savefig(f"{outdir}/aff_means_{tag}.png")
     plt.close()
 
@@ -27,8 +28,6 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
                    cmap='inferno', mode='real'):
     fig, ax = plt.subplots(ncols=2, figsize=(16, 8))
 
-
-
     im = ax[0].imshow(np.mean(sys_cov_samps, axis=0), vmin=vmin, vmax=vmax, cmap=cmap)
     ax[0].set_title("Mean Covariance Sample")
 
@@ -37,9 +36,9 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
         ax[1].imshow(Csys, vmin=vmin, vmax=vmax, cmap=cmap)
         ax[1].set_title("Injected Systematic Cov.")
 
-        fig.colorbar(im, ax=ax.ravel().tolist())
+        fig.colorbar(im, ax=ax.ravel().tolist(), fraction=0.02125, pad=0.04)
     else:
-        fig.colorbar(im, ax=ax[0])
+        fig.colorbar(im, ax=ax[0], fraction=0.02125, pad=0.04)
     for ax_ob in ax[:(1 + Csys_not_None)]:
         if mode == 'real':
             ax_ob.set_ylabel("Time Step")
@@ -47,6 +46,14 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
         else:
             ax_ob.set_ylabel("Block Time Step")
             ax_ob.set_xlabel("Block Time Step")
+            Ntimes = Csys.shape[0] // 2
+            ticks = np.arange(0, 2 * Ntimes, 5)
+            ticklabels = ticks % Ntimes
+
+            ax_ob.set_xticks(ticks)
+            ax_ob.set_yticks(ticks)
+            ax_ob.set_xticklabels(ticklabels)
+            ax_ob.set_yticklabels(ticklabels)
 
     fig.savefig(f"{outdir}/cov_matr_plots_{tag}.png")
     plt.close(fig)
@@ -109,6 +116,7 @@ def make_data_plots(outdir, tag, data, sys_samps, draws, title, true_sys=None,
                 ax[row_ind, blind_ind].tick_params(labelsize=16)
                 ax[row_ind, blind_ind].legend(fontsize=16)
 
+    plt.tight_layout()
     fig.savefig(f"{outdir}/sys_realization_plots_{tag}.png")
     plt.close(fig)
 
