@@ -16,7 +16,7 @@ user-set parameters.
 def sim_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm, sys_var=1, scale_prior_aff=None,
                 Niter=int(1e5), df_prior_aff=None, frac_sys=1, do_affsamps=True, s0=np.full((100, 20), 1.0),
                 aff0=np.ones(100), var0=1e-2, Caff0=np.eye(20), save=True, load=False,
-                outdir="inv_wishart", mode="real"):
+                outdir="inv_wishart", mode="real", scale_prior_unaff=1e-2):
 
     prefix = f"{outdir}/sys_jackknife_"
     tag = f"Ntimes_{Ntimes}_Nblps_{Nblps}_noise_cov_{noise_cov}_corr_scale_{corr_scale}_"
@@ -63,7 +63,8 @@ def sim_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm,
         data = np.load(f"{prefix}_data_{tag}.npy")
         true_sys = np.load(f"{prefix}_true_sys_{tag}.npy")
     else:
-        can = canary(data, 1/noise_cov, df_prior_aff=df_prior_aff, scale_prior_aff=scale_prior_aff)
+        can = canary(data, 1/noise_cov, df_prior_aff=df_prior_aff, scale_prior_aff=scale_prior_aff,
+                     scale_prior_unaff=scale_prior_unaff)
         sys_samps, Caff_samps, var_samps, aff_samps = can.get_post_samps(s0, Caff0, var0, aff0,
                                                                          Niter=Niter, do_affsamps=do_affsamps)
 
@@ -85,7 +86,8 @@ def sim_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm,
 def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm, sys_var=1, scale_prior_aff=None,
                  Niter=int(1e5), df_prior_aff=None, frac_sys=1, do_affsamps=True, s0=np.full((100, 20), 1.0),
                  aff0=np.ones(100), var0=1e-2, Caff0=np.eye(20), save=True,
-                 outdir="inv_wishart", load=False, burn_ind=int(1e2), mode="real"):
+                 outdir="inv_wishart", load=False, burn_ind=int(1e2), mode="real",
+                 scale_prior_unaff=1e-2):
 
     sys_samps, Caff_samps, var_samps, aff_samps, Csys, data, true_sys, tag = sim_wrapper(Ntimes=Ntimes, Nblps=Nblps,
                                                                                          noise_cov=noise_cov,
@@ -101,12 +103,14 @@ def full_wrapper(Ntimes=20, Nblps=100, noise_cov=1, corr_scale=10, cov_func=norm
                                                                                          aff0=aff0,
                                                                                          var0=var0, Caff0=Caff0,
                                                                                          save=save, outdir=outdir,
-                                                                                         load=load, mode=mode)
+                                                                                         load=load, mode=mode,
+                                                                                         scale_prior_unaff=scale_prior_unaff)
 
     draws = [0, int(0.5 * Nblps), Nblps - 1]
     make_aff_means_plot(outdir, tag, aff_samps[burn_ind:],
                         "Baseline-Pair Index", draws, frac_sys=frac_sys)
-    make_cov_plots(outdir, tag, Caff_samps[burn_ind:], vmax=sys_var, Csys=Csys,)
+    make_cov_plots(outdir, tag, Caff_samps[burn_ind:], vmax=sys_var, Csys=Csys,
+                   mode=mode, vmin=-sys_var, cmap="coolwarm")
     make_cov_hists(outdir, tag, Caff_samps[burn_ind:], Csys=Csys)
     make_data_plots(outdir, tag, data, sys_samps[burn_ind:], draws, "Blp",
                     true_sys=true_sys, mode=mode)
@@ -143,6 +147,8 @@ parser.add_argument("--comp", action="store_true",  required=False,
                     help="Whether to do a complex simulation. Default does a real-valued one.")
 parser.add_argument("--burn_ind", action="store", type=int, required=False,
                     default=int(5e4), help="How many samples to burn.")
+parser.add_argument("--scale_prior_unaff", action="store", type=float, required=False,
+                    default=1e-2, help="Scale parameter for unaffected prior.")
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -161,4 +167,4 @@ if __name__ == "__main__":
                  corr_scale=args.corr_scale, sys_var=args.sys_var, Niter=args.Niter,
                  frac_sys=args.frac_sys, outdir=args.outdir, save=args.save,
                  load=args.load, burn_ind=args.burn_ind, mode=mode, s0=s0,
-                 aff0=aff0)
+                 aff0=aff0, scale_prior_unaff=args.scale_prior_unaff)
