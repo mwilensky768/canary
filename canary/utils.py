@@ -38,7 +38,7 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
 
         fig.colorbar(im, ax=ax.ravel().tolist(), fraction=0.02125, pad=0.04)
     else:
-        fig.colorbar(im, ax=ax[0], fraction=0.02125, pad=0.04)
+        fig.colorbar(im, ax=ax[0])
     for ax_ob in ax[:(1 + Csys_not_None)]:
         if mode == 'real':
             ax_ob.set_ylabel("Time Step")
