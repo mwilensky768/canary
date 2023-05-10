@@ -43,7 +43,7 @@ def make_cov_labels(ax_ob, sys_cov_samps, mode):
 
 
 def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
-                   cmap='inferno', mode='real'):
+                   cmap='inferno', mode='real', fraction=0.0425, pad=0.04):
     if Csys is not None:
         fig, ax = plt.subplots(ncols=2, figsize=(16, 8))
 
@@ -54,7 +54,7 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
         ax[1].imshow(Csys, vmin=vmin, vmax=vmax, cmap=cmap)
         ax[1].set_title("Injected Systematic Cov.")
 
-        fig.colorbar(im, ax=ax.ravel().tolist(), fraction=0.02125, pad=0.04)
+        fig.colorbar(im, ax=ax.ravel().tolist(), fraction=fraction / 2, pad=pad)
 
         for ax_ob in ax:
             make_cov_labels(ax_ob, sys_cov_samps, mode)
@@ -62,7 +62,7 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
         fig, ax = plt.subplots(figsize=(8,8))
         im = ax.imshow(np.mean(sys_cov_samps, axis=0), vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_title("Mean Covariance Sample")
-        fig.colorbar(im)
+        fig.colorbar(im, ax=ax, fraction=fraction / 2, pad=pad)
         make_cov_labels(ax, sys_cov_samps, mode)
 
     fig.savefig(f"{outdir}/cov_matr_plots_{tag}.png")
