@@ -62,7 +62,7 @@ def make_cov_plots(outdir, tag, sys_cov_samps, Csys=None, vmin=0, vmax=1,
         fig, ax = plt.subplots(figsize=(8,8))
         im = ax.imshow(np.mean(sys_cov_samps, axis=0), vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_title("Mean Covariance Sample")
-        fig.colorbar(im, ax=ax, fraction=fraction / 2, pad=pad)
+        fig.colorbar(im, ax=ax, fraction=fraction, pad=pad)
         make_cov_labels(ax, sys_cov_samps, mode)
 
     fig.savefig(f"{outdir}/cov_matr_plots_{tag}.png")
